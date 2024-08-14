@@ -2,11 +2,12 @@
 import pywhatkit as kit
 import pandas as pd
 import time
+from helper_functions import utils
 
-input_path = r"C:\Users\ofeks\OneDrive\Documents\Contacts for wedding.xlsx"
+input_path = r"C:\Users\ofeks\OneDrive\Documents\Contacts for Wedding.xlsx"
 image_path = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
-sheet_name = "Contacts - Ofek"
-current_sender = "אופק"
+sheet_name = "Contacts - Ilanit"
+current_sender = "אילנית"
 
 # message type
 is_approval_link_msg = False
@@ -18,7 +19,9 @@ test_text = ""
 # This should fit the row index in the excel file up to where messages should be sent...
 # 1000 =~ infinity
 
-test_case = 10000
+test_case = 1000
+RESERVED_INDICATION = 0
+
 
 def hebrew_conv(text: str):
     return text[::-1]
@@ -70,6 +73,9 @@ def create_msg(name: str, amount: int, nickname: str, is_approval_link_msg: bool
     if not pd.isnull(nickname):
          name = nickname
 
+    # remove trailing spaces from name:
+    name = utils.remove_trailing_spaces(name)
+
     if is_approval_link_msg:
         #TODO: degine the approval message
         text = test_text + 'משפחה וחברים יקרים! הנכם מוזמנים לחתונה של יובל ואופק. לצפייה בהזמנה ואישור הגעה לאירוע לחצו על הלינק הבא.  https://10comm.com/Invitation.php?token=8gsmZmrK'
@@ -94,14 +100,15 @@ def create_msg(name: str, amount: int, nickname: str, is_approval_link_msg: bool
 def iter_df(df: pd.DataFrame):
 
     for row in df.itertuples(name=None):
+        print(row)
         index, name, phone_number, amount, nickname, type, sender, send_approval_link_msg, reserved = row
-
-        if reserved == 1:
-            logger(f"Skipped (index, name) = ({index},{hebrew_conv(name)}) becuase of reserved status.")
-            continue
 
         # to match excel rows
         index = index + 2
+        
+        if reserved == RESERVED_INDICATION:
+            logger(f"Skipped (index, name) = ({index},{hebrew_conv(name)}) becuase of reserved status.")
+            continue
 
         # safety procution 
         if index > test_case:
@@ -129,8 +136,27 @@ def iter_df(df: pd.DataFrame):
         phone_number = add_israel_country_code(phone_number)
         send(phone_number,text)
         logger(f"Message sent to (index, name) = ({index},{hebrew_conv(name)})")
-        
+
+def validate(df):
+    """
+    
+    """
+    x = df['מספר'].apply(lambda x: isinstance(x, str))
+    print(x.to_markdown())
+    return df['מספר'].apply(lambda x: isinstance(x, str)).all()
+
+def remove_carriage(df):
+    df['מספר'] = df['מספר'].str.replace('_x000D_', '', regex=False)
+    return df
 
 if __name__ =="__main__":
     df = read_excel_file()
+    print(df.to_markdown())
+    #print(df.columns)
+    if not validate(df):
+        raise ValueError("Not all numbers are in a string format...")
+    
+    df = remove_carriage(df)
+    #print(df.to_markdown())
+
     iter_df(df)
