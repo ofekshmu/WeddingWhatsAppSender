@@ -1,2 +1,5 @@
 venv
 *.txt
+.venv
+__pycahce__
+*.pyc

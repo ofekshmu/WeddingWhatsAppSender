@@ -5,9 +5,10 @@ import time
 from helper_functions import utils
 
 input_path = r"C:\Users\ofeks\OneDrive\Documents\Contacts for Wedding.xlsx"
-image_path = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
-sheet_name = "Contacts - Ilanit"
-current_sender = "אילנית"
+#image_path = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
+image_path = r"C:\Users\ofeks\OneDrive\Temporary\Hina Invitation\Hina Invitation.png"
+sheet_name = "Contacts - Henna"
+current_sender = "יובל"
 
 # message type
 is_approval_link_msg = False
@@ -92,7 +93,7 @@ def create_msg(name: str, amount: int, nickname: str, is_approval_link_msg: bool
             second_counter = "לראותך"
 
 
-        text = test_text + f"{intro}\nאנו מתרגשים {first_counter} לאירוע החתונה שלנו שייערך בתאריך ה-08.09.24 בכפר אירועים 'קולוניה', רחובות. \nנשמח {second_counter}!"
+        text = test_text + f"היי {name}!\nמתרגשת להזמינך לערב המקווה חינה שלי.\nאשמח לראותך🤍"
 
     return text
 
@@ -101,7 +102,7 @@ def iter_df(df: pd.DataFrame):
 
     for row in df.itertuples(name=None):
         print(row)
-        index, name, phone_number, amount, nickname, type, sender, send_approval_link_msg, reserved = row
+        index, name, phone_number, amount, nickname, type, sender, send_approval_link_msg, reserved, more_info = row
 
         # to match excel rows
         index = index + 2
@@ -134,7 +135,7 @@ def iter_df(df: pd.DataFrame):
             text = create_msg(name, amount, nickname, is_approval_link_msg)
 
         phone_number = add_israel_country_code(phone_number)
-        send(phone_number,text)
+        #send(phone_number,text)
         logger(f"Message sent to (index, name) = ({index},{hebrew_conv(name)})")
 
 def validate(df):
@@ -142,7 +143,7 @@ def validate(df):
     
     """
     x = df['מספר'].apply(lambda x: isinstance(x, str))
-    print(x.to_markdown())
+    #print(x.to_markdown())
     return df['מספר'].apply(lambda x: isinstance(x, str)).all()
 
 def remove_carriage(df):
@@ -151,8 +152,11 @@ def remove_carriage(df):
 
 if __name__ =="__main__":
     df = read_excel_file()
-    print(df.to_markdown())
-    #print(df.columns)
+
+    utils.remove_duplicate_phone_numbers(df, "מספר")
+
+    df = utils.drop_duplicates(df)  
+
     if not validate(df):
         raise ValueError("Not all numbers are in a string format...")
     
