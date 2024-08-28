@@ -5,7 +5,9 @@ import time
 from helper_functions import utils
 
 CONTACTS_EXCEL_PATH = r"C:\Users\ofeks\OneDrive\Documents\Contacts for Wedding.xlsx"
-EXCEL_SHEET_NAME = "Contacts - Henna"
+EXCEL_SHEET_NAME = "Contacts - Ilanit"
+
+SINGLE_SHEET = True
 
 CONTACTS_10COMM_PATH = r"C:\Users\ofeks\Desktop\Contacts_10comm_format.xlsx"
 
@@ -13,8 +15,9 @@ SEND_IMAGE = False
 WEDDING_INV_PATH = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
 HENNA_INV_PATH = r"C:\Users\ofeks\OneDrive\Temporary\Hina Invitation\Hina Invitation.png"
 
-IGNORE_SENDER = False
+IGNORE_SENDER = True
 SENDER = "יובל"
+
 
 MESSAGE_TEST_TEXT = ""
 
@@ -39,8 +42,29 @@ def logger(text: str):
 
 def read_excel_file(input_path: str):
     try:
-        df = pd.read_excel(input_path, sheet_name=EXCEL_SHEET_NAME)
-        return df
+        if SINGLE_SHEET:
+            df = pd.read_excel(input_path, sheet_name=EXCEL_SHEET_NAME)
+            return df
+        else:
+            #excel_file = pd.ExcelFile(CONTACTS_EXCEL_PATH)
+
+            # List to store all DataFrames
+            df_list = []
+            label_list = ["Contacts - Ofek",\
+                          "Contacts - Yuval's Parents",\
+                          "Contacts - Gal",\
+                          "Contacts - Alon",\
+                          "Contacts - Ilanit",\
+                          "Contacts - Yuval"]
+
+            # Iterate over each sheet name (label) and create a DataFrame
+            for label in label_list:
+                df = pd.read_excel(CONTACTS_EXCEL_PATH, sheet_name=label)
+                df_list.append(df)
+
+            return pd.concat(df_list, ignore_index=True)
+
+
     except Exception as e:
         logger(f"There was a problem reading the excel file...\n error was: {e}")
         raise Exception
@@ -53,8 +77,9 @@ def send(phone_number, text):
                             WEDDING_INV_PATH,
                             text)
     else:
-        kit.sendwhats_image(phone_number,
-                            text)
+        kit.sendwhatmsg_instantly(phone_number,
+                            text,
+                            0)
     time.sleep(3)
 
 def add_israel_country_code(phone_number):
@@ -88,17 +113,19 @@ def create_msg(name: str, amount: int, nickname: str):
     if amount > 1:
         initial = f"{name} היקרים!"
         formality = "שהוזמנתם"
+        formality2 = "לראותכם!"
     else:                           # One person invitation
         initial = f"היי {name}!"
         formality = "שהוזמנת"
+        formality2 = "לראותך!"
 
-    MESSAGE_TEXT = f"""{initial}! אנחנו רק מזכירים {formality} לחתונה של יובל ואופק. 
-                    לצפייה בהזמנה ואישור הגעה לאירוע לחצו על הלינק הבא. 
-                    https://10comm.com/Invitation.php?token=8gsmZmrK 
+    msg_txt = f"""{initial}! אנחנו רק מזכירים {formality} לחתונה של יובל ואופק בתאריך 8/9/24 ביום ראשון. 
+לחצ/י על הקישור לצפייה בהזמנה ואישור הגעה. 
+https://10comm.com/Invitation.php?token=8gsmZmrK 
 
-                    אל דאגה! במידה ומשהו ישתנה תוכלו לעדכן אותנו שוב בקישור."""
+נשמח {formality2}"""
     
-    return MESSAGE_TEXT
+    return msg_txt
 
 def iter_df(df: pd.DataFrame):
 
@@ -119,7 +146,7 @@ def iter_df(df: pd.DataFrame):
         # to match excel rows
         index = index + 2
         
-        if active == SKIP_VALUE:
+        if active == SKIP_VALUE or index < 57:
             logger(f"Skipped (index, name) = ({index},{hebrew_conv(name)}) becuase of reserved status.")
             continue
 
@@ -151,30 +178,62 @@ def iter_df(df: pd.DataFrame):
 def validate(df):
     """
     Checks that all numbers are in a valid string format
-    """
-    x = df['מספר'].apply(lambda x: isinstance(x, str))
-    #print(x.to_markdown())
-    return df['מספר'].apply(lambda x: isinstance(x, str)).all()
+    """    
+    # Apply the condition to check if each entry in 'מספר' is a string
+    is_string = df['מספר'].apply(lambda x: isinstance(x, str))
 
-def remove_carriage(df):
+    # Print the markdown of the entire condition check
+    # print(is_string.to_markdown())
+
+    # Filter rows where the condition is False
+    false_rows = df[~is_string]
+
+    # Print the rows where 'מספר' is not a string
+    if not false_rows.empty:
+        print("Rows where 'מספר' is not a string:")
+        print(false_rows[['שם מלא','מספר','סוג','שולח את האסמאמס', 'שורה פעילה']].to_markdown())
+    else:
+        print("All rows in 'מספר' are strings.")
+
+    # Return whether all rows in 'מספר' are strings
+    return is_string.all()
+
+def remove_carriage(df, column_name):
     """
     removes excesive spaces...
     """
-    df['מספר'] = df['מספר'].str.replace('_x000D_', '', regex=False)
+    df[column_name] = df[column_name].str.replace('_x000D_', '', regex=False)
     return df
+
+def print_df_stats(df: pd.DataFrame):
+    total_rows = df.shape[0]
+    print(f"Total number of rows: {total_rows}")
+
+    # Calculate the sum of the 'כמות' column
+    total_quantity_sum = df['כמות'].sum()
+    print(f"Sum of the column 'כמות': {total_quantity_sum}")
 
 if __name__ =="__main__":
 
 
     df = read_excel_file(CONTACTS_EXCEL_PATH)
-    utils.remove_duplicate_phone_numbers(df, "מספר")
-    df = utils.drop_duplicates(df)  
 
     if not validate(df):
         raise ValueError("Not all numbers are in a string format...")
-    
-    df = remove_carriage(df)
 
+    utils.remove_duplicate_phone_numbers(df, "מספר")
+    df = utils.drop_duplicates(df)  
+    
+    df = remove_carriage(df, 'מספר')
+    df = remove_carriage(df, 'אישורי הגעה')
+
+    print_df_stats(df)
+
+    df = df[(df['שורה פעילה'] == 1) & (df['אישורי הגעה'] == 'כן')]
+    
+    print_df_stats(df)
+    print(df.columns)
+    print(df['מספר'].to_markdown())
     res = utils.template_menu(["Send Messages",
                                "Convert Contacts excel to 10comm format"], "Select an option:")
     match res:

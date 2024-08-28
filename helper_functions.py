@@ -59,7 +59,7 @@ class utils:
         # Print the duplicates
         if not duplicates.empty:
             print("Dropped duplicates:")
-            print(duplicates[['שם מלא','מספר']])
+            print(duplicates[['שם מלא','מספר','שולח את האסמאמס']])
         else:
             print("No duplicates found.")
         
