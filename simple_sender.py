@@ -7,9 +7,10 @@ from helper_functions import utils
 CONTACTS_EXCEL_PATH = r"C:\Users\ofeks\OneDrive\Documents\Contacts for Wedding.xlsx"
 EXCEL_SHEET_NAME = "Contacts - Ilanit"
 
-SINGLE_SHEET = True
+SINGLE_SHEET = False
 
 CONTACTS_10COMM_PATH = r"C:\Users\ofeks\Desktop\Contacts_10comm_format.xlsx"
+APPROVAL_EXCEL_10COMM_PATH = r"C:\Users\ofeks\Downloads\list_03-09-2024_22_26.csv"
 
 SEND_IMAGE = False
 WEDDING_INV_PATH = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
@@ -232,14 +233,20 @@ if __name__ =="__main__":
     df = df[(df['שורה פעילה'] == 1) & (df['אישורי הגעה'] == 'כן')]
     
     print_df_stats(df)
-    print(df.columns)
-    print(df['מספר'].to_markdown())
+    #print(df.columns)
+    #print(df['מספר'].to_markdown())
     res = utils.template_menu(["Send Messages",
-                               "Convert Contacts excel to 10comm format"], "Select an option:")
+                               "Convert Contacts excel to 10comm format",
+                               "Create approval Excel"], "Select an option:")
     match res:
         case 0:
             iter_df(df)
         case 1:
-            utils.Convert_to_10com(df, CONTACTS_10COMM_PATH)
+            utils.Convert_to_10com(CONTACTS_10COMM_PATH)
+        case 2:
+            utils.Merge_Approvals(df, APPROVAL_EXCEL_10COMM_PATH)
         case _:
             raise ValueError("Check menu for errors...")
+        
+
+        

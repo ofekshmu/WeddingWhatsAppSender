@@ -1,6 +1,8 @@
 import re
 import pandas as pd
 
+APPROVAL_EXCEL_FACTORED = r"C:\Users\ofeks\Desktop\approval_excel.xlsx"
+
 class utils:
 
     @staticmethod
@@ -67,15 +69,25 @@ class utils:
         return df.drop_duplicates(subset='מספר')
     
     @staticmethod
-    def Convert_to_10com(df: pd.DataFrame, output_filename: str):
+    def Convert_to_10com(output_filename: str):
         """
         Receives a df in a certain format,
         creates a new excel file with columns A and B
         A - Name
         B - Phone number
         """
+        input_df = pd.read_excel(APPROVAL_EXCEL_FACTORED)
+
+        print(f"Before: {len(input_df)}")
+        input_df = input_df[input_df['סטטוס הגעה'].isna()]
+
+        print(input_df['מספר'].to_markdown())
+        print(f"After: {len(input_df)}")
+
+
         # Select columns A and B from the DataFrame
-        selected_columns = df[['כינוי', 'מספר']]
+        selected_columns = input_df[['שם בקובץ המקורי', 'מספר']]
+        print(selected_columns.to_markdown())
         
         # Write the selected columns to a new Excel file
         selected_columns.to_excel(output_filename, index=False)
@@ -121,3 +133,25 @@ class utils:
                     break
                 print(f"{lst[i + const*j]:27s}", end="")
             print()
+
+    @staticmethod
+    def Merge_Approvals(df: pd.DataFrame, approval_excel_path: str):
+        df_approvals = pd.read_csv(approval_excel_path)
+        x = len(df_approvals)
+        df_approvals = df_approvals.dropna(subset=['טלפון'])
+        df_approvals = df_approvals[df_approvals['האם ברשימה'] != 'נמחק']
+        utils.logger(f"removed {x - len(df_approvals)} blank columns")
+        #print(df_approvals.to_markdown())
+        utils.logger(f"Stats:\ndf length: {len(df)}\n10comm excel length")
+        print(df[['מספר']].columns)
+        print('test')
+        df['מספר'] = df['מספר'].apply(lambda x: '0' + x[4:6] + '-' + x[6:] if x[:4] == '+972' and len(x) == 13\
+                                                     else 'BAD NUMBER FORMAT')
+        print(df['מספר'].to_markdown())
+        merged_df = pd.merge(df[['שם מלא', 'מספר', 'כמות', 'סוג']], 
+                             df_approvals[['שם מלא', 'טלפון', 'סטטוס הגעה']], left_on='מספר', right_on='טלפון', how='outer')
+        merged_df.drop('טלפון', axis=1, inplace=True)
+        merged_df.rename(columns={'שם מלא_x': 'שם בקובץ המקורי', 'שם מלא_y': 'שם כפי שהוזן במערכת אישורי הגעה'}, inplace=True)
+        #merged_df = merged_df[merged_df['סטטוס הגעה'] != 'לא ידוע']
+        print(merged_df.to_markdown())
+        merged_df.to_excel(APPROVAL_EXCEL_FACTORED, index=False)
