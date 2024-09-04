@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+import pywhatkit as kit
 
 APPROVAL_EXCEL_FACTORED = r"C:\Users\ofeks\Desktop\approval_excel.xlsx"
 
@@ -155,3 +156,87 @@ class utils:
         #merged_df = merged_df[merged_df['סטטוס הגעה'] != 'לא ידוע']
         print(merged_df.to_markdown())
         merged_df.to_excel(APPROVAL_EXCEL_FACTORED, index=False)
+        
+    @staticmethod
+    def BroadCast_message():
+        """_summary_
+        """
+        
+        category = ['צבא -אופק']
+        status = ['1', '2', '3', '4', '5', 'אולי', 'לא יגיע']
+        columns = [category, status]
+        
+        approval_df = pd.read_excel(APPROVAL_EXCEL_FACTORED)
+        initial_values = len(approval_df)
+        
+        for col in columns:
+            for value in col:
+                approval_df = approval_df[approval_df[col] == value]
+        
+        utils.logger(f"The size of the data frame was reduced by {initial_values - len(approval_df)}\n\
+The original size was {initial_values}\n\
+The current size in {len(approval_df)}")
+        
+        print(approval_df.to_markdown())
+        
+        return approval_df
+    
+    @staticmethod
+    def hebrew_conv(text: str):
+        return text[::-1]
+  
+    @staticmethod
+    def send(phone_number, text):
+
+        kit.sendwhatmsg_instantly(phone_number,
+                            text,
+                            0)
+        time.sleep(3)
+    
+    @staticmethod
+    def add_israel_country_code(phone_number):
+        """
+        This function takes a phone number without a country code and adds Israel's country code (+972) to it.
+        
+        Parameters:
+        phone_number (str): The phone number without the country code.
+
+        Returns:
+        str: The phone number with Israel's country code added.
+        """
+        israel_country_code = "+972"
+        
+        # Remove any leading zero from the phone number
+        if phone_number.startswith("0"):
+            phone_number = phone_number[1:]
+        
+            # Combine the country code with the phone number
+            phone_number = israel_country_code + phone_number
+        
+        return phone_number    
+    
+    @staticmethod
+    def send_broadCastMessage(filtered_df, text):
+        
+        for row in filtered_df.itertuples(name=None):
+            index, \
+                name, \
+                phone_number, \
+                amount, \
+                nickname, \
+                group, \
+                sender, \
+                send_approval_link_msg, \
+                active, \
+                more_info \
+                    =    row
+        
+        text = f"""היי {name}!
+איזה כיף! אישרת הגעה לאירוע שלנו!
+פתחנו קבוצת טרמפים עבור מי שאולי מסתבך להגיע וגם עבור מי שיכול לעזור בהגעה,
+
+https://chat.whatsapp.com/EoqStFuFNGDGH0RNMw5cwN"""
+        
+        phone_number = utils.add_israel_country_code(phone_number)
+        utils.send(phone_number, text)
+        utils.logger(f"Message sent to (index, name) = ({index},{utils.hebrew_conv(name)})")

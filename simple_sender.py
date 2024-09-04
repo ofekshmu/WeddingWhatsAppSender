@@ -31,10 +31,6 @@ is_approval_link_msg = False
 test_case = 1000
 SKIP_VALUE = 0
 
-
-def hebrew_conv(text: str):
-    return text[::-1]
-
 def logger(text: str):
     print(text)
     f = open("logger.txt", 'a', encoding="utf-8")
@@ -83,26 +79,6 @@ def send(phone_number, text):
                             0)
     time.sleep(3)
 
-def add_israel_country_code(phone_number):
-    """
-    This function takes a phone number without a country code and adds Israel's country code (+972) to it.
-    
-    Parameters:
-    phone_number (str): The phone number without the country code.
-
-    Returns:
-    str: The phone number with Israel's country code added.
-    """
-    israel_country_code = "+972"
-    
-    # Remove any leading zero from the phone number
-    if phone_number.startswith("0"):
-        phone_number = phone_number[1:]
-    
-        # Combine the country code with the phone number
-        phone_number = israel_country_code + phone_number
-    
-    return phone_number
 
 def create_msg(name: str, amount: int, nickname: str):
     if not pd.isnull(nickname):
@@ -148,7 +124,7 @@ def iter_df(df: pd.DataFrame):
         index = index + 2
         
         if active == SKIP_VALUE or index < 57:
-            logger(f"Skipped (index, name) = ({index},{hebrew_conv(name)}) becuase of reserved status.")
+            logger(f"Skipped (index, name) = ({index},{utils.hebrew_conv(name)}) becuase of reserved status.")
             continue
 
         # safety procution 
@@ -158,12 +134,12 @@ def iter_df(df: pd.DataFrame):
 
         if not IGNORE_SENDER:
             if sender != SENDER:
-                logger(f"skipped (index, name) = ({index},{hebrew_conv(name)}) because the sender did not match current sender.")
+                logger(f"skipped (index, name) = ({index},{utils.hebrew_conv(name)}) because the sender did not match current sender.")
                 continue    
 
 
         if send_approval_link_msg == "לא":
-            logger(f"skipped (index, name) = ({index},{hebrew_conv(name)}) because thi should not receive approval link message.")
+            logger(f"skipped (index, name) = ({index},{utils.hebrew_conv(name)}) because thi should not receive approval link message.")
             continue
 
         elif send_approval_link_msg == "כן":
@@ -172,9 +148,9 @@ def iter_df(df: pd.DataFrame):
             raise ValueError(f"Unkown value - {send_approval_link_msg} for the following (index, name) = ({index},{name}).")
 
 
-        phone_number = add_israel_country_code(phone_number)
+        phone_number = utils.add_israel_country_code(phone_number)
         send(phone_number, text)
-        logger(f"Message sent to (index, name) = ({index},{hebrew_conv(name)})")
+        logger(f"Message sent to (index, name) = ({index},{utils.hebrew_conv(name)})")
 
 def validate(df):
     """
@@ -245,6 +221,9 @@ if __name__ =="__main__":
             utils.Convert_to_10com(CONTACTS_10COMM_PATH)
         case 2:
             utils.Merge_Approvals(df, APPROVAL_EXCEL_10COMM_PATH)
+        case 3:
+            filtered_df = utils.BroadCast_message()
+            utils.send_broadCastMessage(filtered_df)
         case _:
             raise ValueError("Check menu for errors...")
         
