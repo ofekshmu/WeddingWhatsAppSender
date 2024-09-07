@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import pywhatkit as kit
+import time
 
 APPROVAL_EXCEL_FACTORED = r"C:\Users\ofeks\Desktop\approval_excel.xlsx"
 
@@ -158,21 +159,24 @@ class utils:
         merged_df.to_excel(APPROVAL_EXCEL_FACTORED, index=False)
         
     @staticmethod
-    def BroadCast_message():
+    def filter_approval_Excel():
         """_summary_
         """
-        
-        category = ['צבא -אופק']
-        status = ['1', '2', '3', '4', '5', 'אולי', 'לא יגיע']
-        columns = [category, status]
         
         approval_df = pd.read_excel(APPROVAL_EXCEL_FACTORED)
         initial_values = len(approval_df)
         
-        for col in columns:
-            for value in col:
-                approval_df = approval_df[approval_df[col] == value]
-        
+
+
+        if True:
+            approval_df = approval_df[(approval_df['סוג'] == 'צבא -אופק') |
+                                      (approval_df['סוג'] == 'חברים לימודים אופק') |
+                                      (approval_df['סוג'] == "בצ'אטה")]
+            
+            approval_df['סטטוס הגעה'] = approval_df['סטטוס הגעה'].astype(str)
+
+            approval_df = approval_df[approval_df['סטטוס הגעה'].str.isdigit() ]
+
         utils.logger(f"The size of the data frame was reduced by {initial_values - len(approval_df)}\n\
 The original size was {initial_values}\n\
 The current size in {len(approval_df)}")
@@ -216,27 +220,49 @@ The current size in {len(approval_df)}")
         return phone_number    
     
     @staticmethod
-    def send_broadCastMessage(filtered_df, text):
-        
-        for row in filtered_df.itertuples(name=None):
-            index, \
-                name, \
-                phone_number, \
-                amount, \
-                nickname, \
-                group, \
-                sender, \
-                send_approval_link_msg, \
-                active, \
-                more_info \
-                    =    row
-        
-        text = f"""היי {name}!
+    def send_broadCastMessage(filtered_df):
+        text = f"""היי!
 איזה כיף! אישרת הגעה לאירוע שלנו!
 פתחנו קבוצת טרמפים עבור מי שאולי מסתבך להגיע וגם עבור מי שיכול לעזור בהגעה,
 
 https://chat.whatsapp.com/EoqStFuFNGDGH0RNMw5cwN"""
         
-        phone_number = utils.add_israel_country_code(phone_number)
-        utils.send(phone_number, text)
-        utils.logger(f"Message sent to (index, name) = ({index},{utils.hebrew_conv(name)})")
+        for index, row in filtered_df.iterrows():
+            phone_number = row['מספר']
+            index = row.index
+            name = row['שם בקובץ המקורי'] + " | " + row['שם כפי שהוזן במערכת אישורי הגעה']
+        
+        
+            phone_number = utils.add_israel_country_code(phone_number)
+            utils.send(phone_number, text)
+            utils.logger(f"Message sent to (index, name) = ({index},{utils.hebrew_conv(name)})")
+
+    @staticmethod
+    def filter_approval_Excel_for_iplan():
+
+        approval_df = pd.read_excel(APPROVAL_EXCEL_FACTORED)
+        initial_values = len(approval_df)
+        
+        
+
+        if True:
+            approval_df['סטטוס הגעה'] = approval_df['סטטוס הגעה'].astype(str)
+
+            approval_df = approval_df[approval_df['סטטוס הגעה'].str.isdigit()]
+
+        approval_df['סטטוס הגעה'] = approval_df['סטטוס הגעה'].astype(int)
+        approval_df.drop('כמות', axis=1, inplace=True)
+
+        utils.logger(f"The size of the data frame was reduced by {initial_values - len(approval_df)}\n\
+The original size was {initial_values}\n\
+The current size in {len(approval_df)}\n\
+Guests sum is: {approval_df['סטטוס הגעה'].sum()}")
+        
+        from datetime import datetime
+
+        # Get the current date and time
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+        # Add the current date and time to the file name
+        date = f"_{current_time}"
+        approval_df.to_excel(r"C:\Users\ofeks\OneDrive\Temporary\Whatsapp sender\outputs\iPlanGuests_" + date + ".xls", index=False, header=False, engine='openpyxl')

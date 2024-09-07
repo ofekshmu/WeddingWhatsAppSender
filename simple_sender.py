@@ -10,7 +10,8 @@ EXCEL_SHEET_NAME = "Contacts - Ilanit"
 SINGLE_SHEET = False
 
 CONTACTS_10COMM_PATH = r"C:\Users\ofeks\Desktop\Contacts_10comm_format.xlsx"
-APPROVAL_EXCEL_10COMM_PATH = r"C:\Users\ofeks\Downloads\list_03-09-2024_22_26.csv"
+
+APPROVAL_EXCEL_10COMM_PATH = r"C:\Users\ofeks\Downloads\list_05-09-2024_20_29.csv"
 
 SEND_IMAGE = False
 WEDDING_INV_PATH = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
@@ -213,7 +214,9 @@ if __name__ =="__main__":
     #print(df['מספר'].to_markdown())
     res = utils.template_menu(["Send Messages",
                                "Convert Contacts excel to 10comm format",
-                               "Create approval Excel"], "Select an option:")
+                               "Create approval Excel",
+                               "Broadcast a message",
+                               "Create an excel for iPLAN format"], "Select an option:")
     match res:
         case 0:
             iter_df(df)
@@ -222,8 +225,10 @@ if __name__ =="__main__":
         case 2:
             utils.Merge_Approvals(df, APPROVAL_EXCEL_10COMM_PATH)
         case 3:
-            filtered_df = utils.BroadCast_message()
+            filtered_df = utils.filter_approval_Excel()
             utils.send_broadCastMessage(filtered_df)
+        case 4:
+            utils.filter_approval_Excel_for_iplan()
         case _:
             raise ValueError("Check menu for errors...")
         
