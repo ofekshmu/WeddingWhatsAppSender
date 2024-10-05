@@ -163,12 +163,13 @@ class utils:
         """_summary_
         """
         
-        approval_df = pd.read_excel(APPROVAL_EXCEL_FACTORED)
+        approval_df = pd.read_excel(r'C:\Users\ofeks\OneDrive\Temporary\Whatsapp sender\outputs\iPlanGuests__2024-09-08_01-32-38.xls')
         initial_values = len(approval_df)
         
 
+        approval_df = approval_df.dropna(subset=['מספר'])
 
-        if True:
+        if False:
             approval_df = approval_df[(approval_df['סוג'] == 'צבא -אופק') |
                                       (approval_df['סוג'] == 'חברים לימודים אופק') |
                                       (approval_df['סוג'] == "בצ'אטה")]
@@ -221,21 +222,30 @@ The current size in {len(approval_df)}")
     
     @staticmethod
     def send_broadCastMessage(filtered_df):
-        text = f"""היי!
-איזה כיף! אישרת הגעה לאירוע שלנו!
-פתחנו קבוצת טרמפים עבור מי שאולי מסתבך להגיע וגם עבור מי שיכול לעזור בהגעה,
+        text = f"""משפחה, חברים!
+איזה כיף היה לחגוג איתכם אתמול!
+תודה רבה שהגעתם לשמוח איתנו ביום המאושר ביותר שלנו!
 
-https://chat.whatsapp.com/EoqStFuFNGDGH0RNMw5cwN"""
+מצרפים לכם קישור לאלבום התמונות המשותף שלנו ושלכם, ומזמינים אתכם להעלות לשם תמונות שצילמתם באירוע שלנו. נשמח לראות את החתונה שלנו מנקודת המבט שלכם:
+
+https://photos.app.goo.gl/iWwMsoyYr8pCvFb5A
+
+בנוסף, מצרפים לכם קישור תקין לקבוצת ה- PAYBOX למקרה ונתקלתם אתמול בבעיה:
+
+https://payboxapp.page.link/TDhnNMDi7uN8A4DZ6
+
+אוהבים, מעריכים, ועדיין מתרגשים,
+יובל ואופק❤"""
         
         for index, row in filtered_df.iterrows():
             phone_number = row['מספר']
             index = row.index
-            name = row['שם בקובץ המקורי'] + " | " + row['שם כפי שהוזן במערכת אישורי הגעה']
+            #name = row['שם בקובץ המקורי'] + " | " + row['שם כפי שהוזן במערכת אישורי הגעה']
         
         
             phone_number = utils.add_israel_country_code(phone_number)
             utils.send(phone_number, text)
-            utils.logger(f"Message sent to (index, name) = ({index},{utils.hebrew_conv(name)})")
+            utils.logger(f"Message sent to (index, name) = ({index})")
 
     @staticmethod
     def filter_approval_Excel_for_iplan():

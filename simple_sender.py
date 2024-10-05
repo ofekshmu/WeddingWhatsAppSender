@@ -11,7 +11,7 @@ SINGLE_SHEET = False
 
 CONTACTS_10COMM_PATH = r"C:\Users\ofeks\Desktop\Contacts_10comm_format.xlsx"
 
-APPROVAL_EXCEL_10COMM_PATH = r"C:\Users\ofeks\Downloads\list_05-09-2024_20_29.csv"
+APPROVAL_EXCEL_10COMM_PATH = r"C:\Users\ofeks\Downloads\list_08-09-2024_01_31.csv"
 
 SEND_IMAGE = False
 WEDDING_INV_PATH = r"C:\Users\ofeks\OneDrive\Temporary\Wedding invitation\Final_Wedding_Invitation.png"
